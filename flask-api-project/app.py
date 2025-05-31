@@ -9,7 +9,7 @@ from email.mime.text import MIMEText
 
 app = Flask(__name__)
 
-# Start Prometheus metrics server
+# Starting Prometheus metrics server
 start_http_server(9090)
 
 # Prometheus metrics
@@ -23,15 +23,16 @@ label_prediction_counter = Counter(
 )
 
 # Load model and label encoder
-model = joblib.load("attack_detection_model.pkl")
-label_encoder = joblib.load("label_encoder.pkl")
+model = joblib.load("attack_detection_model2.pkl")
+label_encoder = joblib.load("label_encoder2.pkl")
 
-# Define required features
+# required features
 REQUIRED_FEATURES = [
     'Src Port', 'Dst Port', 'Protocol', 'Flow Duration',
     'Tot Fwd Pkts', 'Tot Bwd Pkts', 'Pkt Len Mean',
     'Flow Byts/s', 'Flow Pkts/s', 'SYN Flag Cnt',
-    'Init Fwd Win Byts', 'ACK Flag Cnt', 'RST Flag Cnt'
+    'Init Fwd Win Byts', 'ACK Flag Cnt', 'RST Flag Cnt',
+    'Flow IAT Mean', 'Active Mean', 'Idle Mean'
 ]
 
 # Preload known labels in Prometheus
@@ -39,11 +40,11 @@ KNOWN_LABELS = list(label_encoder.classes_)
 for label in KNOWN_LABELS:
     label_prediction_counter.labels(label=label).inc(0)
 
-# 📧 Email alert function
+# Email alert function
 def send_email_alert(attack_labels):
-    sender_email = "dkviyanage358@gmail.com"         # Your Gmail (sender)
+    sender_email = "dkviyanage358@gmail.com"         # Gmail of sender
     receiver_email = "dkviyanage358@gmail.com"       # Recipient Gmail
-    app_password = "svwbsobrtgjidicz "    # Your 16-char App Password (no spaces)
+    app_password = "svwbsobrtgjidicz "    # Your 16-char App Password 
 
     subject = "🚨 Intrusion Alert!"
     body = f"⚠️ Suspicious activity detected!\n\nAttack types: {', '.join(set(attack_labels))}"
@@ -81,7 +82,7 @@ def predict():
         file = request.files['file']
         df = pd.read_csv(file)
 
-        # Check for missing features
+        # Checking for missing features
         missing = [feat for feat in REQUIRED_FEATURES if feat not in df.columns]
         if missing:
             error_counter.inc()
